@@ -1,20 +1,20 @@
-class ZCL_OA2C_SPECIFICS_ZAZURE definition
-  public
-  inheriting from CL_OA2C_SPECIFICS_ABSTRACT
-  create public .
+CLASS zcl_oa2c_specifics_zazure DEFINITION
+  PUBLIC
+  INHERITING FROM cl_oa2c_specifics_abstract
+  CREATE PUBLIC .
 
-public section.
+  PUBLIC SECTION.
 
-  methods IF_OA2C_SPECIFICS~GET_CONFIG_EXTENSION
-    redefinition .
-  methods IF_OA2C_SPECIFICS~GET_ENDPOINT_SETTINGS
-    redefinition .
-  methods IF_OA2C_SPECIFICS~GET_SUPPORTED_GRANT_TYPES
-    redefinition .
-  methods IF_OA2C_SPECIFICS~GET_AC_AUTH_REQU_PARAM_NAMES
-    redefinition .
-protected section.
-private section.
+    METHODS if_oa2c_specifics~get_config_extension
+        REDEFINITION .
+    METHODS if_oa2c_specifics~get_endpoint_settings
+        REDEFINITION .
+    METHODS if_oa2c_specifics~get_supported_grant_types
+        REDEFINITION .
+    METHODS if_oa2c_specifics~get_ac_auth_requ_param_names
+        REDEFINITION .
+  PROTECTED SECTION.
+  PRIVATE SECTION.
 ENDCLASS.
 
 
@@ -50,19 +50,20 @@ CLASS ZCL_OA2C_SPECIFICS_ZAZURE IMPLEMENTATION.
   METHOD if_oa2c_specifics~get_endpoint_settings.
     CONSTANTS c_app_id TYPE string VALUE ''.
 
-    e_changeable                  = abap_false.
+    e_changeable                  = abap_true.
 
-    e_authorization_endpoint_path = `login.windows.net/` && c_app_id && `/oauth2/authorize`.
-    e_token_endpoint_path         = `login.windows.net/` && c_app_id && `/oauth2/token`.
+    e_authorization_endpoint_path = `login.microsoftonline.com/` && c_app_id && `/oauth2/v2.0/authorize`.
+    e_token_endpoint_path         = `login.microsoftonline.com/` && c_app_id && `/oauth2/v2.0/token`.
     CLEAR e_revocation_endpoint_path.
 
   ENDMETHOD.
 
 
-  method IF_OA2C_SPECIFICS~GET_SUPPORTED_GRANT_TYPES.
-     e_authorization_code = abap_true.
-     e_saml20_assertion   = abap_false.
-     e_refresh            = abap_true.
-     e_revocation         = abap_false.
-  endmethod.
+  METHOD if_oa2c_specifics~get_supported_grant_types.
+    e_authorization_code = abap_true.
+    e_saml20_assertion   = abap_false.
+    e_refresh            = abap_true.
+    e_revocation         = abap_false.
+    e_cc                 = abap_true.
+  ENDMETHOD.
 ENDCLASS.
