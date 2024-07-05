@@ -26,4 +26,13 @@ CLASS zcl_oa2c_ce_zazure IMPLEMENTATION.
     additional_param-value = `consent`.
     APPEND additional_param TO et_additional_params.
   ENDMETHOD.
+
+  METHOD if_oa2c_config_extension~get_cc_at_requ_params.
+
+  ENDMETHOD.
+
+  METHOD if_oa2c_config_extension~get_saml20_at_requ_params.
+
+  ENDMETHOD.
+
 ENDCLASS.
