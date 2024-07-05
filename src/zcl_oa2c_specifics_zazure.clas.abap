@@ -24,7 +24,7 @@ CLASS zcl_oa2c_specifics_zazure IMPLEMENTATION.
 
   METHOD if_oa2c_specifics~get_ac_auth_requ_param_names.
 
-    DATA: ls_add_param TYPE if_oa2c_specifics~ty_s_add_param.
+    DATA: add_param TYPE if_oa2c_specifics~ty_s_add_param.
 
     super->if_oa2c_specifics~get_ac_auth_requ_param_names(
       IMPORTING
@@ -32,13 +32,12 @@ CLASS zcl_oa2c_specifics_zazure IMPLEMENTATION.
         e_redirect_uri        = e_redirect_uri
         e_response_type       = e_response_type
         e_response_type_value = e_response_type_value
-        e_scope               = e_scope
-    ).
+        e_scope               = e_scope ).
 
-    ls_add_param-name = `resource`.
-    INSERT ls_add_param INTO TABLE et_add_param_names.
-    ls_add_param-name = `prompt`.
-    INSERT ls_add_param INTO TABLE et_add_param_names.
+    add_param-name = `resource`.
+    INSERT add_param INTO TABLE et_add_param_names.
+    add_param-name = `prompt`.
+    INSERT add_param INTO TABLE et_add_param_names.
 
   ENDMETHOD.
 

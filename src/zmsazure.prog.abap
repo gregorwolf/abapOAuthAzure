@@ -26,13 +26,13 @@ START-OF-SELECTION.
         fields         TYPE tihttpnvp,
         oa2c_exception TYPE REF TO cx_oa2c.
 
-  FIELD-SYMBOLS: <ls_field> LIKE LINE OF fields.
+  FIELD-SYMBOLS: <field> LIKE LINE OF fields.
 
 
 **********************************************************************
 * CREATE http client
 **********************************************************************
-  CALL METHOD cl_http_client=>create_by_url
+  cl_http_client=>create_by_url(
     EXPORTING
       url                = target
       ssl_id             = 'ANONYM'
@@ -42,7 +42,7 @@ START-OF-SELECTION.
       argument_not_found = 1
       plugin_not_active  = 2
       internal_error     = 3
-      OTHERS             = 4.
+      OTHERS             = 4 ).
   IF sy-subrc <> 0.
     MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
                WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
@@ -51,15 +51,12 @@ START-OF-SELECTION.
 * turn off logon popup. detect authentication errors.
   http_client->propertytype_logon_popup = 0.
 
-  CALL METHOD http_client->request->set_method
-    EXPORTING
-      method = http_method.
+  http_client->request->set_method( method = http_method ).
 
   LOOP AT params INTO param.
-    CALL METHOD http_client->request->set_form_field
-      EXPORTING
+    http_client->request->set_form_field(
         name  = param-name
-        value = param-value.
+        value = param-value ).
   ENDLOOP.
 
 
@@ -68,41 +65,35 @@ START-OF-SELECTION.
 **********************************************************************
   TRY.
 
-      CALL METHOD cl_oauth2_client=>create
-        EXPORTING
-          i_profile        = profile
-        RECEIVING
-          ro_oauth2_client = oa2c_client.
+      oa2c_client = cl_oauth2_client=>create( i_profile = profile ).
 
     CATCH cx_oa2c INTO oa2c_exception.
-      WRITE: `Error calling CREATE.`.
-      WRITE: / oa2c_exception->get_text( ).
+      WRITE `Error calling CREATE.`.
+      WRITE / oa2c_exception->get_text( ).
       RETURN.
   ENDTRY.
 
   TRY.
 
-      CALL METHOD oa2c_client->set_token
-        EXPORTING
+      oa2c_client->set_token(
           io_http_client = http_client
-          i_param_kind   = param_kind.
+          i_param_kind   = param_kind ).
 
     CATCH cx_oa2c INTO oa2c_exception.
       TRY.
-          CALL METHOD oa2c_client->execute_refresh_flow.
+          oa2c_client->execute_refresh_flow( ).
         CATCH cx_oa2c INTO oa2c_exception.
-          WRITE: `Error calling EXECUTE_REFRESH_FLOW.`.
-          WRITE: / oa2c_exception->get_text( ).
+          WRITE `Error calling EXECUTE_REFRESH_FLOW.`.
+          WRITE / oa2c_exception->get_text( ).
           RETURN.
       ENDTRY.
       TRY.
-          CALL METHOD oa2c_client->set_token
-            EXPORTING
+          oa2c_client->set_token(
               io_http_client = http_client
-              i_param_kind   = param_kind.
+              i_param_kind   = param_kind ).
         CATCH cx_oa2c INTO oa2c_exception.
-          WRITE: `Error calling SET_TOKEN.`.
-          WRITE: / oa2c_exception->get_text( ).
+          WRITE `Error calling SET_TOKEN.`.
+          WRITE / oa2c_exception->get_text( ).
           RETURN.
       ENDTRY.
   ENDTRY.
@@ -111,24 +102,24 @@ START-OF-SELECTION.
 **********************************************************************
 * Send / Receive Request
 **********************************************************************
-  CALL METHOD http_client->send
+  http_client->send(
     EXCEPTIONS
       http_communication_failure = 1
       http_invalid_state         = 2
       http_processing_failed     = 3
       http_invalid_timeout       = 4
-      OTHERS                     = 5.
+      OTHERS                     = 5 ).
   IF sy-subrc <> 0.
     MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
                WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
   ENDIF.
 
-  CALL METHOD http_client->receive
+  http_client->receive(
     EXCEPTIONS
       http_communication_failure = 1
       http_invalid_state         = 2
       http_processing_failed     = 3
-      OTHERS                     = 4.
+      OTHERS                     = 4 ).
   IF sy-subrc <> 0.
     MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
                WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
@@ -138,17 +129,15 @@ START-OF-SELECTION.
 **********************************************************************
 * Display result
 **********************************************************************
-  CALL METHOD http_client->response->get_status
+  http_client->response->get_status(
     IMPORTING
-      code = status_code.
+      code = status_code ).
   WRITE / |{ status_code }|.
 
   WRITE /.
 
   IF status_code = 200.
-    CALL METHOD http_client->response->get_cdata
-      RECEIVING
-        data = response_data.
+    response_data = http_client->response->get_cdata( ).
 
     DATA(l_content_type) = http_client->response->get_content_type( ).
     IF l_content_type CP `text/html*`.
@@ -159,12 +148,12 @@ START-OF-SELECTION.
       cl_demo_output=>display_json( json = response_data ).
     ENDIF.
   ELSE.
-    CALL METHOD http_client->response->get_header_fields
+    http_client->response->get_header_fields(
       CHANGING
-        fields = fields.
+        fields = fields ).
 
-    LOOP AT fields ASSIGNING <ls_field>.
-      WRITE: / <ls_field>-name, 25 <ls_field>-value.
+    LOOP AT fields ASSIGNING <field>.
+      WRITE: / <field>-name, 25 <field>-value.
     ENDLOOP.
 
   ENDIF.
@@ -173,10 +162,10 @@ START-OF-SELECTION.
 **********************************************************************
 * Close
 **********************************************************************
-  CALL METHOD http_client->close
+  http_client->close(
     EXCEPTIONS
       http_invalid_state = 1
-      OTHERS             = 2.
+      OTHERS             = 2 ).
   IF sy-subrc <> 0.
     MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
                WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
