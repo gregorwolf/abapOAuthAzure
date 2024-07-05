@@ -19,20 +19,21 @@ ENDCLASS.
 
 
 
-CLASS ZCL_OA2C_SPECIFICS_ZAZURE IMPLEMENTATION.
+CLASS zcl_oa2c_specifics_zazure IMPLEMENTATION.
 
 
   METHOD if_oa2c_specifics~get_ac_auth_requ_param_names.
 
     DATA: ls_add_param TYPE if_oa2c_specifics~ty_s_add_param.
 
-    CALL METHOD super->if_oa2c_specifics~get_ac_auth_requ_param_names
+    super->if_oa2c_specifics~get_ac_auth_requ_param_names(
       IMPORTING
         e_client_id           = e_client_id
         e_redirect_uri        = e_redirect_uri
         e_response_type       = e_response_type
         e_response_type_value = e_response_type_value
-        e_scope               = e_scope.
+        e_scope               = e_scope
+    ).
 
     ls_add_param-name = `resource`.
     INSERT ls_add_param INTO TABLE et_add_param_names.
@@ -48,12 +49,12 @@ CLASS ZCL_OA2C_SPECIFICS_ZAZURE IMPLEMENTATION.
 
 
   METHOD if_oa2c_specifics~get_endpoint_settings.
-    CONSTANTS c_app_id TYPE string VALUE ''.
+    CONSTANTS app_id TYPE string VALUE ''.
 
     e_changeable                  = abap_true.
 
-    e_authorization_endpoint_path = `login.microsoftonline.com/` && c_app_id && `/oauth2/v2.0/authorize`.
-    e_token_endpoint_path         = `login.microsoftonline.com/` && c_app_id && `/oauth2/v2.0/token`.
+    e_authorization_endpoint_path = `login.microsoftonline.com/` && app_id && `/oauth2/v2.0/authorize`.
+    e_token_endpoint_path         = `login.microsoftonline.com/` && app_id && `/oauth2/v2.0/token`.
     CLEAR e_revocation_endpoint_path.
 
   ENDMETHOD.

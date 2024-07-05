@@ -1,29 +1,29 @@
-class ZCL_OA2C_CE_ZAZURE definition
-  public
-  create public .
+CLASS zcl_oa2c_ce_zazure DEFINITION
+  PUBLIC
+  CREATE PUBLIC .
 
-public section.
+  PUBLIC SECTION.
 
-  interfaces IF_BADI_INTERFACE .
-  interfaces IF_OA2C_CONFIG_EXTENSION .
-protected section.
-private section.
+    INTERFACES if_badi_interface .
+    INTERFACES if_oa2c_config_extension .
+  PROTECTED SECTION.
+  PRIVATE SECTION.
 ENDCLASS.
 
 
 
-CLASS ZCL_OA2C_CE_ZAZURE IMPLEMENTATION.
+CLASS zcl_oa2c_ce_zazure IMPLEMENTATION.
 
 
   METHOD if_oa2c_config_extension~get_ac_auth_requ_params.
-    DATA: ls_nvp LIKE LINE OF et_additional_params.
+    DATA: additional_param LIKE LINE OF et_additional_params.
 
-    ls_nvp-name  = `resource`.
-    ls_nvp-value = `https://graph.windows.net`.
-    APPEND ls_nvp TO et_additional_params.
+    additional_param-name  = `resource`.
+    additional_param-value = `https://graph.windows.net`.
+    APPEND additional_param TO et_additional_params.
 
-    ls_nvp-name  = `prompt`.
-    ls_nvp-value = `consent`.
-    APPEND ls_nvp TO et_additional_params.
+    additional_param-name  = `prompt`.
+    additional_param-value = `consent`.
+    APPEND additional_param TO et_additional_params.
   ENDMETHOD.
 ENDCLASS.
