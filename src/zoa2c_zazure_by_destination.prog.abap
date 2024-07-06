@@ -24,7 +24,8 @@ START-OF-SELECTION.
   DATA: http_client   TYPE REF TO if_http_client,
         status_code   TYPE i,
         response_data TYPE string,
-        fields        TYPE tihttpnvp.
+        fields        TYPE tihttpnvp,
+        content_type  TYPE string.
 
   FIELD-SYMBOLS <field> LIKE LINE OF fields.
 
@@ -104,16 +105,14 @@ START-OF-SELECTION.
 **********************************************************************
 * Display result
 **********************************************************************
-  http_client->response->get_status(
-    IMPORTING
-      code   = status_code ).
+  http_client->response->get_status( IMPORTING code = status_code ).
   WRITE / |{ status_code }|.
 
   WRITE /.
 
   IF status_code = 200.
     response_data = http_client->response->get_cdata( ).
-    DATA(content_type) = http_client->response->get_content_type( ).
+    content_type = http_client->response->get_content_type( ).
     IF content_type CP `text/html*`.
       cl_demo_output=>display_html( html = response_data ).
     ELSEIF content_type CP `text/xml*`.
@@ -122,9 +121,7 @@ START-OF-SELECTION.
       cl_demo_output=>display_json( json = response_data ).
     ENDIF.
   ELSE.
-    http_client->response->get_header_fields(
-      CHANGING
-        fields = fields ).
+    http_client->response->get_header_fields( CHANGING fields = fields ).
     LOOP AT fields ASSIGNING <field>.
       WRITE: / <field>-name, 25 <field>-value.
     ENDLOOP.

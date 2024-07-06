@@ -1,14 +1,16 @@
 REPORT zoa2c_zazure_by_url LINE-SIZE 1023.
 
 
-DATA: http_method TYPE string,
-      param_kind  TYPE string,
-      params      TYPE tihttpnvp,
-      param       TYPE ihttpnvp.
+DATA: http_method  TYPE string,
+      param_kind   TYPE string,
+      params       TYPE tihttpnvp,
+      param        TYPE ihttpnvp,
+      content_type TYPE string.
 
-PARAMETERS: profile  TYPE oa2c_profile DEFAULT 'ZAZURE1',
-            config   TYPE oa2c_configuration,
-            target   TYPE string LOWER CASE DEFAULT 'https://graph.windows.net/<Your Microsoft Azure Domain>/me?api-version=2013-04-05',
+PARAMETERS: p_profil TYPE oa2c_profile DEFAULT 'ZAZURE1',
+            p_config TYPE oa2c_configuration,
+            p_target TYPE string LOWER CASE
+              DEFAULT 'https://graph.windows.net/<Your Microsoft Azure Domain>/me?api-version=2013-04-05',
             p_ccflow TYPE abap_bool AS CHECKBOX.
 
 AT SELECTION-SCREEN.
@@ -33,7 +35,7 @@ START-OF-SELECTION.
 **********************************************************************
   cl_http_client=>create_by_url(
     EXPORTING
-      url                = target
+      url                = p_target
       ssl_id             = 'ANONYM'
     IMPORTING
       client             = http_client
@@ -65,8 +67,8 @@ START-OF-SELECTION.
   TRY.
 
       oa2c_client = cl_oauth2_client=>create(
-        i_profile       = profile
-        i_configuration = config ).
+        i_profile       = p_profil
+        i_configuration = p_config ).
 
     CATCH cx_oa2c INTO oa2c_exception.
       WRITE `Error calling CREATE.`.
@@ -134,9 +136,7 @@ START-OF-SELECTION.
 **********************************************************************
 * Display result
 **********************************************************************
-  http_client->response->get_status(
-    IMPORTING
-      code = status_code ).
+  http_client->response->get_status( IMPORTING code = status_code ).
   WRITE / |{ status_code }|.
 
   WRITE /.
@@ -144,7 +144,7 @@ START-OF-SELECTION.
   IF status_code = 200.
     response_data = http_client->response->get_cdata( ).
 
-    DATA(content_type) = http_client->response->get_content_type( ).
+    content_type = http_client->response->get_content_type( ).
     IF content_type CP `text/html*`.
       cl_demo_output=>display_html( html = response_data ).
     ELSEIF content_type CP `text/xml*`.
@@ -153,9 +153,7 @@ START-OF-SELECTION.
       cl_demo_output=>display_json( json = response_data ).
     ENDIF.
   ELSE.
-    http_client->response->get_header_fields(
-      CHANGING
-        fields = fields ).
+    http_client->response->get_header_fields( CHANGING fields = fields ).
 
     LOOP AT fields ASSIGNING <field>.
       WRITE: / <field>-name, 25 <field>-value.
