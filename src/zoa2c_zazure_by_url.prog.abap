@@ -6,9 +6,10 @@ DATA: http_method TYPE string,
       params      TYPE tihttpnvp,
       param       TYPE ihttpnvp.
 
-PARAMETERS: profile TYPE oa2c_profile DEFAULT 'ZAZURE1',
-            config  TYPE oa2c_configuration,
-            target  TYPE string LOWER CASE DEFAULT 'https://graph.windows.net/<Your Microsoft Azure Domain>/me?api-version=2013-04-05'.
+PARAMETERS: profile  TYPE oa2c_profile DEFAULT 'ZAZURE1',
+            config   TYPE oa2c_configuration,
+            target   TYPE string LOWER CASE DEFAULT 'https://graph.windows.net/<Your Microsoft Azure Domain>/me?api-version=2013-04-05',
+            p_ccflow TYPE abap_bool AS CHECKBOX.
 
 AT SELECTION-SCREEN.
 
@@ -74,6 +75,10 @@ START-OF-SELECTION.
   ENDTRY.
 
   TRY.
+      IF p_ccflow = abap_true.
+        oa2c_client->execute_cc_flow( ).
+      ENDIF.
+
       oa2c_client->set_token(
           io_http_client = http_client
           i_param_kind   = param_kind ).
@@ -129,7 +134,9 @@ START-OF-SELECTION.
 **********************************************************************
 * Display result
 **********************************************************************
-  http_client->response->get_status( code = status_code ).
+  http_client->response->get_status(
+    IMPORTING
+      code = status_code ).
   WRITE / |{ status_code }|.
 
   WRITE /.
@@ -146,7 +153,9 @@ START-OF-SELECTION.
       cl_demo_output=>display_json( json = response_data ).
     ENDIF.
   ELSE.
-    http_client->response->get_header_fields( fields = fields ).
+    http_client->response->get_header_fields(
+      CHANGING
+        fields = fields ).
 
     LOOP AT fields ASSIGNING <field>.
       WRITE: / <field>-name, 25 <field>-value.
