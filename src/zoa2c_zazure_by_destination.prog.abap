@@ -6,29 +6,27 @@
 REPORT zoa2c_zazure_by_destination.
 
 DATA: destination TYPE pficf_destination_name,
-      method      TYPE string,
+      http_method      TYPE string,
       param_kind  TYPE string,
-      lt_param    TYPE tihttpnvp,
-      ls_param    TYPE ihttpnvp.
+      params    TYPE tihttpnvp,
+      param    TYPE ihttpnvp.
 
-PARAMETERS: dest   TYPE pficf_destination_name DEFAULT 'MS_GRAPH',
-            target TYPE string LOWER CASE DEFAULT `/users/{id | userPrincipalName}/profile`.
+PARAMETERS: p_dest   TYPE pficf_destination_name DEFAULT 'MS_GRAPH',
+            p_target TYPE string LOWER CASE DEFAULT `/users/{id | userPrincipalName}/profile`.
 
 AT SELECTION-SCREEN.
 
 START-OF-SELECTION.
-  destination = dest.
-  method  = `GET`.
+  destination = p_dest.
+  http_method  = `GET`.
   param_kind = 'H'.
 
-  DATA: lo_http_client  TYPE REF TO if_http_client,
-        lo_oa2c_client  TYPE REF TO if_oauth2_client,
-        l_status_code   TYPE i,
-        l_response_data TYPE string,
-        lt_fields       TYPE tihttpnvp,
-        lx_oa2c         TYPE REF TO cx_oa2c.
+  DATA: http_client  TYPE REF TO if_http_client,
+        status_code   TYPE i,
+        response_data TYPE string,
+        fields       TYPE tihttpnvp.
 
-  FIELD-SYMBOLS: <ls_field> LIKE LINE OF lt_fields.
+  FIELD-SYMBOLS <field> LIKE LINE OF fields.
 
 **********************************************************************
 * CREATE http client
@@ -37,7 +35,7 @@ START-OF-SELECTION.
       EXPORTING
         destination                = destination
       IMPORTING
-        client                     = lo_http_client
+        client                     = http_client
       EXCEPTIONS
         argument_not_found         = 1
         destination_not_found      = 2
@@ -50,9 +48,7 @@ START-OF-SELECTION.
         oa2c_invalid_parameters    = 9
         oa2c_invalid_scope         = 10
         oa2c_invalid_grant         = 11
-        OTHERS                     = 12
-  ).
-
+        OTHERS                     = 12 ).
 
   IF sy-subrc <> 0.
     MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
@@ -66,80 +62,67 @@ START-OF-SELECTION.
   ENDIF.
 
 * turn off logon popup. detect authentication errors.
-  lo_http_client->propertytype_logon_popup = 0.
+  http_client->propertytype_logon_popup = 0.
 
-  lo_http_client->request->set_method(
-    method = method
-  ).
+  http_client->request->set_method( http_method ).
 
-  LOOP AT lt_param INTO ls_param.
-    lo_http_client->request->set_form_field(
-      EXPORTING
-          name  = ls_param-name
-          value = ls_param-value
-    ).
+  LOOP AT params INTO param.
+    http_client->request->set_form_field(
+          name  = param-name
+          value = param-value ).
   ENDLOOP.
 
 **********************************************************************
 * Send / Receive Request
 **********************************************************************
-  lo_http_client->request->set_header_field(
+  http_client->request->set_header_field(
     name  = '~request_uri'
-    value = target ).
+    value = p_target ).
 
-  lo_http_client->send(
+  http_client->send(
     EXCEPTIONS
       http_communication_failure = 1
       http_invalid_state         = 2
       http_processing_failed     = 3
       http_invalid_timeout       = 4
-      OTHERS                     = 5
-  ).
+      OTHERS                     = 5 ).
   IF sy-subrc <> 0.
     MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
                WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
   ENDIF.
-  lo_http_client->receive(
+  http_client->receive(
     EXCEPTIONS
       http_communication_failure = 1
       http_invalid_state         = 2
       http_processing_failed     = 3
-      OTHERS                     = 4
-  ).
+      OTHERS                     = 4 ).
   IF sy-subrc <> 0.
     MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
                WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
   ENDIF.
 
-
 **********************************************************************
 * Display result
 **********************************************************************
-  lo_http_client->response->get_status(
-    IMPORTING
-        code = l_status_code
-  ).
-  WRITE / |{ l_status_code }|.
+  http_client->response->get_status( code = status_code ).
+  WRITE / |{ status_code }|.
 
   WRITE /.
 
-  IF l_status_code = 200.
-    l_response_data = lo_http_client->response->get_cdata( ).
-    DATA(l_content_type) = lo_http_client->response->get_content_type( ).
-    IF l_content_type CP `text/html*`.
-      cl_demo_output=>display_html( html = l_response_data ).
-    ELSEIF l_content_type CP `text/xml*`.
-      cl_demo_output=>display_xml( xml = l_response_data ).
-    ELSEIF l_content_type CP `application/json*`.
-      cl_demo_output=>display_json( json = l_response_data ).
+  IF status_code = 200.
+    response_data = http_client->response->get_cdata( ).
+    DATA(content_type) = http_client->response->get_content_type( ).
+    IF content_type CP `text/html*`.
+      cl_demo_output=>display_html( html = response_data ).
+    ELSEIF content_type CP `text/xml*`.
+      cl_demo_output=>display_xml( xml = response_data ).
+    ELSEIF content_type CP `application/json*`.
+      cl_demo_output=>display_json( json = response_data ).
     ENDIF.
   ELSE.
-    lo_http_client->response->get_header_fields(
-      CHANGING
-        fields = lt_fields
-    ).
-    LOOP AT lt_fields ASSIGNING <ls_field>.
-      WRITE: / <ls_field>-name, 25 <ls_field>-value.
+    http_client->response->get_header_fields( fields = fields ).
+    LOOP AT fields ASSIGNING <field>.
+      WRITE: / <field>-name, 25 <field>-value.
     ENDLOOP.
 
   ENDIF.
@@ -148,11 +131,10 @@ START-OF-SELECTION.
 **********************************************************************
 * Close
 **********************************************************************
-  lo_http_client->close(
+  http_client->close(
     EXCEPTIONS
       http_invalid_state = 1
-      OTHERS             = 2
-  ).
+      OTHERS             = 2 ).
   IF sy-subrc <> 0.
     MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
                WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.

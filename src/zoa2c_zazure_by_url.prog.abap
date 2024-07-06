@@ -24,7 +24,7 @@ START-OF-SELECTION.
         fields         TYPE tihttpnvp,
         oa2c_exception TYPE REF TO cx_oa2c.
 
-  FIELD-SYMBOLS: <field> LIKE LINE OF fields.
+  FIELD-SYMBOLS <field> LIKE LINE OF fields.
 
 
 **********************************************************************
@@ -49,7 +49,7 @@ START-OF-SELECTION.
 * turn off logon popup. detect authentication errors.
   http_client->propertytype_logon_popup = 0.
 
-  http_client->request->set_method( method = http_method ).
+  http_client->request->set_method( http_method ).
 
   LOOP AT params INTO param.
     http_client->request->set_form_field(
@@ -64,7 +64,7 @@ START-OF-SELECTION.
   TRY.
 
       oa2c_client = cl_oauth2_client=>create(
-        i_profile = profile
+        i_profile       = profile
         i_configuration = config ).
 
     CATCH cx_oa2c INTO oa2c_exception.
@@ -129,9 +129,7 @@ START-OF-SELECTION.
 **********************************************************************
 * Display result
 **********************************************************************
-  http_client->response->get_status(
-    IMPORTING
-      code = status_code ).
+  http_client->response->get_status( code = status_code ).
   WRITE / |{ status_code }|.
 
   WRITE /.
@@ -139,18 +137,16 @@ START-OF-SELECTION.
   IF status_code = 200.
     response_data = http_client->response->get_cdata( ).
 
-    DATA(l_content_type) = http_client->response->get_content_type( ).
-    IF l_content_type CP `text/html*`.
+    DATA(content_type) = http_client->response->get_content_type( ).
+    IF content_type CP `text/html*`.
       cl_demo_output=>display_html( html = response_data ).
-    ELSEIF l_content_type CP `text/xml*`.
+    ELSEIF content_type CP `text/xml*`.
       cl_demo_output=>display_xml( xml = response_data ).
-    ELSEIF l_content_type CP `application/json*`.
+    ELSEIF content_type CP `application/json*`.
       cl_demo_output=>display_json( json = response_data ).
     ENDIF.
   ELSE.
-    http_client->response->get_header_fields(
-      CHANGING
-        fields = fields ).
+    http_client->response->get_header_fields( fields = fields ).
 
     LOOP AT fields ASSIGNING <field>.
       WRITE: / <field>-name, 25 <field>-value.
