@@ -1,6 +1,5 @@
 REPORT zoa2c_zazure_by_url LINE-SIZE 1023.
 
-
 DATA: http_method  TYPE string,
       param_kind   TYPE string,
       params       TYPE tihttpnvp,
