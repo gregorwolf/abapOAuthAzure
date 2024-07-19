@@ -1,4 +1,4 @@
-REPORT zoa2c_zazure_by_destination.
+REPORT zoa2c_zazure_by_dest.
 
 DATA: destination TYPE pficf_destination_name,
       http_method TYPE string,
